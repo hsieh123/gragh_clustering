@@ -26,6 +26,11 @@ void graph_clustering::calculate_delta_modularity(vector<cluster> &) {
  * 1) cluster size should lower than primer capacity
  * 2) if go over all cluster pairs and the modularity cannot increase anymore, stop
 */
+/*
+after chunk_based clustering, please write the result to file so that we can reuse the clustering result.
+ The input should be all data chunks in our data set (all expansion)
+ The output should be primers (just clusters) and chunks in the primer
+*/
 void graph_clustering::clustering_chunk_based(vector<cluster> &) {
 
 }
@@ -37,6 +42,10 @@ based on the code of chunk_based clustering, this file_based should add some mor
 please talk with me before you start.
 */
 
+/*
+after file_based clustering, don't have to write to file. this function will be integrated into zhichao's code.
+ remain the result in data structure: vector<cluster> clusters
+*/
 void graph_clustering::clustering_file_based(vector<cluster> &) {
 
 }
