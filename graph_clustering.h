@@ -10,6 +10,7 @@
 #include <string>
 #include <unordered_map>
 #include <set>
+#include <iostream>
 
 using namespace std;
 
@@ -17,7 +18,8 @@ using namespace std;
 class node{
 public:
     string chunk_ID_;
-    list<pair<string,int>> adjacent_nodes_;
+    //list<pair<string,int>> adjacent_nodes_;
+    unordered_map<string,int> adjacent_nodes_;
 };
 
 // at beginning, one cluster is one node (chunk). after assignment, one cluster is a set of chunks, those chunks will be stored in one primer
@@ -52,6 +54,13 @@ public:
     void calculate_delta_modularity(vector<cluster>&);
     void clustering_file_based(vector<cluster>&);
     void clustering_chunk_based(vector<cluster>&);
+
+private:
+
+    int32_t k(node&);
+    int32_t A(node&, node&);
+    int32_t A(cluster&, node&);
+    int32_t A(cluster&, cluster&);
 };
 
 

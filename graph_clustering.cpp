@@ -14,8 +14,19 @@ according the definition of modularity, to calculate the delta_modularity, you d
 you only have to recalculate the nodes in the clusters that you try to merge
 We have to do this step to decrease our computing complexity*/
 
-void graph_clustering::calculate_delta_modularity(vector<cluster> &) {
-
+void graph_clustering::calculate_delta_modularity(vector<cluster> & clusters) {
+    cout << "k0: " << k(clusters[0].chunks_.begin()->second);
+    cout << "  << should be 3"<<endl;
+    cout << "A04: " << A(clusters[0].chunks_.begin()->second,clusters[4].chunks_.begin()->second);
+    cout << "  << should be 2" <<endl;
+    cout << "A74: " << A(clusters[0].chunks_.begin()->second,clusters[7].chunks_.begin()->second);
+    cout << "  << should be 0"<<endl;
+    cout << "A12(cluster,node): " << A(clusters[1],clusters[2].chunks_.begin()->second);
+    cout << "  << should be 1"<<endl;
+    cout << "A15(clusters): "<<A(clusters[1],clusters[5]);
+    cout << "  << should be 2" <<endl;
+    cout << "A07(clusters): "<<A(clusters[0],clusters[7]);
+    cout << "  << should be 0" <<endl;
 }
 
 
@@ -31,8 +42,8 @@ after chunk_based clustering, please write the result to file so that we can reu
  The input should be all data chunks in our data set (all expansion)
  The output should be primers (just clusters) and chunks in the primer
 */
-void graph_clustering::clustering_chunk_based(vector<cluster> &) {
-
+void graph_clustering::clustering_chunk_based(vector<cluster> & clusters) {
+    calculate_delta_modularity(clusters);
 }
 
 
@@ -48,4 +59,48 @@ after file_based clustering, don't have to write to file. this function will be 
 */
 void graph_clustering::clustering_file_based(vector<cluster> &) {
 
+}
+
+
+int32_t graph_clustering::k(node& n) {
+    int32_t weight_sum=0;
+    for (std::unordered_map<string,int>::iterator it= n.adjacent_nodes_.begin(); it!=n.adjacent_nodes_.end(); it++) {
+        weight_sum += it->second;
+    }
+    return weight_sum;
+}
+
+int32_t graph_clustering::A(node& n1, node& n2) {
+    unordered_map<string,int>::iterator it = n1.adjacent_nodes_.find(n2.chunk_ID_);
+    if (it != n1.adjacent_nodes_.end())
+        return it->second;
+    else
+        return 0;
+}
+
+int32_t graph_clustering::A(cluster& c, node& n) {
+    int32_t weight_sum=0;
+    //unordered_map<string,int>::iterator cit;
+    for (std::unordered_map<string,node&>::iterator it = c.chunks_.begin(); it != c.chunks_.end(); it++) {
+    //    cit = it->second.adjacent_nodes_.find(n.chunk_ID_);
+    //    if ( cit != it->second.adjacent_nodes_.end())
+    //        weight_sum += cit->second;
+        weight_sum += A(it->second, n);
+    }
+    return weight_sum;
+}
+
+// Computational intensive since we need to match every chunk in every cluster. Better way?
+int32_t graph_clustering::A(cluster& c1, cluster& c2) {
+    int32_t weight_sum=0;
+    //unordered_map<string,int>::iterator cit;
+    for (std::unordered_map<string,node&>::iterator it = c2.chunks_.begin(); it != c2.chunks_.end(); it++) {
+        // for (std::unordered_map<string,node&>::iterator c2_it = c2.chunks_.begin(); c2_it != c2.chunks_.end(); c2_it++) {
+        //     cit = it->second.adjacent_nodes_.find(c2_it->first);
+        //     if (cit != it->second.adjacent_nodes_.end())
+        //         weight_sum += cit->second;
+        // }
+        weight_sum += A(c1,it->second);
+    }
+    return weight_sum;
 }

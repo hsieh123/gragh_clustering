@@ -42,31 +42,31 @@ int main() {
         node4.chunk_ID_="chunk4";    node5.chunk_ID_="chunk5";
         node6.chunk_ID_="chunk6";    node7.chunk_ID_="chunk7";
 
-        node0.adjacent_nodes_.emplace_back(make_pair("chunk1",1));
-        node0.adjacent_nodes_.emplace_back(make_pair("chunk4",2));
+        node0.adjacent_nodes_.emplace("chunk1",1);
+        node0.adjacent_nodes_.emplace("chunk4",2);
 
-        node1.adjacent_nodes_.emplace_back(make_pair("chunk0",1));
-        node1.adjacent_nodes_.emplace_back(make_pair("chunk2",1));
-        node1.adjacent_nodes_.emplace_back(make_pair("chunk5",2));
+        node1.adjacent_nodes_.emplace("chunk0",1);
+        node1.adjacent_nodes_.emplace("chunk2",1);
+        node1.adjacent_nodes_.emplace("chunk5",2);
 
-        node2.adjacent_nodes_.emplace_back(make_pair("chunk1",1));
-        node2.adjacent_nodes_.emplace_back(make_pair("chunk3",1));
-        node2.adjacent_nodes_.emplace_back(make_pair("chunk6",2));
+        node2.adjacent_nodes_.emplace("chunk1",1);
+        node2.adjacent_nodes_.emplace("chunk3",1);
+        node2.adjacent_nodes_.emplace("chunk6",2);
 
-        node3.adjacent_nodes_.emplace_back(make_pair("chunk2",1));
-        node3.adjacent_nodes_.emplace_back(make_pair("chunk7",2));
+        node3.adjacent_nodes_.emplace("chunk2",1);
+        node3.adjacent_nodes_.emplace("chunk7",2);
 
-        node4.adjacent_nodes_.emplace_back(make_pair("chunk0",2));
-        node4.adjacent_nodes_.emplace_back(make_pair("chunk5",1));
+        node4.adjacent_nodes_.emplace("chunk0",2);
+        node4.adjacent_nodes_.emplace("chunk5",1);
 
-        node5.adjacent_nodes_.emplace_back(make_pair("chunk1",2));
-        node5.adjacent_nodes_.emplace_back(make_pair("chunk4",1));
+        node5.adjacent_nodes_.emplace("chunk1",2);
+        node5.adjacent_nodes_.emplace("chunk4",1);
 
-        node6.adjacent_nodes_.emplace_back(make_pair("chunk2",2));
-        node6.adjacent_nodes_.emplace_back(make_pair("chunk7",1));
+        node6.adjacent_nodes_.emplace("chunk2",2);
+        node6.adjacent_nodes_.emplace("chunk7",1);
 
-        node7.adjacent_nodes_.emplace_back(make_pair("chunk3",2));
-        node7.adjacent_nodes_.emplace_back(make_pair("chunk6",1));
+        node7.adjacent_nodes_.emplace("chunk3",2);
+        node7.adjacent_nodes_.emplace("chunk6",1);
 
         graphClustering.graph_matrix.emplace(node0.chunk_ID_,node0);
         graphClustering.graph_matrix.emplace(node1.chunk_ID_,node1);
