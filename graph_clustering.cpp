@@ -72,35 +72,20 @@ int32_t graph_clustering::k(node& n) {
 
 int32_t graph_clustering::A(node& n1, node& n2) {
     unordered_map<string,int>::iterator it = n1.adjacent_nodes_.find(n2.chunk_ID_);
-    if (it != n1.adjacent_nodes_.end())
-        return it->second;
-    else
-        return 0;
+    return (it != n1.adjacent_nodes_.end())? it->second : 0;
 }
 
 int32_t graph_clustering::A(cluster& c, node& n) {
     int32_t weight_sum=0;
-    //unordered_map<string,int>::iterator cit;
-    for (std::unordered_map<string,node&>::iterator it = c.chunks_.begin(); it != c.chunks_.end(); it++) {
-    //    cit = it->second.adjacent_nodes_.find(n.chunk_ID_);
-    //    if ( cit != it->second.adjacent_nodes_.end())
-    //        weight_sum += cit->second;
+    for (std::unordered_map<string,node&>::iterator it = c.chunks_.begin(); it != c.chunks_.end(); it++)
         weight_sum += A(it->second, n);
-    }
     return weight_sum;
 }
 
 // Computational intensive since we need to match every chunk in every cluster. Better way?
 int32_t graph_clustering::A(cluster& c1, cluster& c2) {
     int32_t weight_sum=0;
-    //unordered_map<string,int>::iterator cit;
-    for (std::unordered_map<string,node&>::iterator it = c2.chunks_.begin(); it != c2.chunks_.end(); it++) {
-        // for (std::unordered_map<string,node&>::iterator c2_it = c2.chunks_.begin(); c2_it != c2.chunks_.end(); c2_it++) {
-        //     cit = it->second.adjacent_nodes_.find(c2_it->first);
-        //     if (cit != it->second.adjacent_nodes_.end())
-        //         weight_sum += cit->second;
-        // }
+    for (std::unordered_map<string,node&>::iterator it = c2.chunks_.begin(); it != c2.chunks_.end(); it++)
         weight_sum += A(c1,it->second);
-    }
     return weight_sum;
 }
