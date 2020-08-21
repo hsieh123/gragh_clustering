@@ -4,8 +4,8 @@
 
 #include "graph_clustering.h"
 // at beginning, graph should run this function to know its initial modularity
-void graph_clustering::calculate_modularity(vector<cluster> &) {
-
+void graph_clustering::calculate_modularity(unordered_map<int,cluster> & clusters) {
+    
 }
 
 /*when doing the hierarchical clustering, it does clustering based on the delta_modularity in a greedy way
@@ -14,7 +14,7 @@ according the definition of modularity, to calculate the delta_modularity, you d
 you only have to recalculate the nodes in the clusters that you try to merge
 We have to do this step to decrease our computing complexity*/
 
-void graph_clustering::calculate_delta_modularity(vector<cluster> & clusters) {
+void graph_clustering::calculate_delta_modularity(unordered_map<int,cluster> & clusters) {
     cout << "k0: " << k(clusters[0].chunks_.begin()->second);
     cout << "  << should be 3"<<endl;
     cout << "A04: " << A(clusters[0].chunks_.begin()->second,clusters[4].chunks_.begin()->second);
@@ -42,7 +42,7 @@ after chunk_based clustering, please write the result to file so that we can reu
  The input should be all data chunks in our data set (all expansion)
  The output should be primers (just clusters) and chunks in the primer
 */
-void graph_clustering::clustering_chunk_based(vector<cluster> & clusters) {
+void graph_clustering::clustering_chunk_based(unordered_map<int,cluster> & clusters) {
     calculate_delta_modularity(clusters);
 }
 
@@ -57,7 +57,7 @@ please talk with me before you start.
 after file_based clustering, don't have to write to file. this function will be integrated into zhichao's code.
  remain the result in data structure: vector<cluster> clusters
 */
-void graph_clustering::clustering_file_based(vector<cluster> &) {
+void graph_clustering::clustering_file_based(unordered_map<int,cluster> &) {
 
 }
 

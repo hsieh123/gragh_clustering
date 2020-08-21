@@ -50,10 +50,13 @@ public:
 // in this matrix every edge will be stored twice, when go over all edges please keep it in mind!!
 // e.g, the modularity requires you to calculate the summation of all edges' weight, if you add all weight in the matrix please divide 2
     unordered_map<string,node&> graph_matrix;
-    void calculate_modularity(vector<cluster>&);
-    void calculate_delta_modularity(vector<cluster>&);
-    void clustering_file_based(vector<cluster>&);
-    void clustering_chunk_based(vector<cluster>&);
+    size_t global_modularity_;
+    long max_delta_modularity_;
+    
+    void calculate_modularity(unordered_map<int, cluster>&);
+    void calculate_delta_modularity(unordered_map<int, cluster>&);
+    void clustering_file_based(unordered_map<int, cluster>&);
+    void clustering_chunk_based(unordered_map<int, cluster>&);
 
 private:
 

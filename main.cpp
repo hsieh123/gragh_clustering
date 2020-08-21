@@ -79,7 +79,7 @@ int main() {
 
 
 
-    vector<cluster> clusters;
+    unordered_map<int,cluster> clusters;
 
         cluster clst0,clst1,clst2,clst3,clst4,clst5,clst6,clst7;
         clst0.cluster_ID_=0;
@@ -99,14 +99,14 @@ int main() {
         clst5.chunks_.emplace("chunk5",node5);
         clst6.chunks_.emplace("chunk6",node6);
         clst7.chunks_.emplace("chunk7",node7);
-        clusters.emplace_back(clst0);
-        clusters.emplace_back(clst1);
-        clusters.emplace_back(clst2);
-        clusters.emplace_back(clst3);
-        clusters.emplace_back(clst4);
-        clusters.emplace_back(clst5);
-        clusters.emplace_back(clst6);
-        clusters.emplace_back(clst7);
+        clusters.emplace(clst0.cluster_ID_,clst0);
+        clusters.emplace(clst1.cluster_ID_,clst1);
+        clusters.emplace(clst2.cluster_ID_,clst2);
+        clusters.emplace(clst3.cluster_ID_,clst3);
+        clusters.emplace(clst4.cluster_ID_,clst4);
+        clusters.emplace(clst5.cluster_ID_,clst5);
+        clusters.emplace(clst6.cluster_ID_,clst6);
+        clusters.emplace(clst7.cluster_ID_,clst7);
 
 
     graphClustering.clustering_chunk_based(clusters);
