@@ -3,9 +3,24 @@
 //
 
 #include "graph_clustering.h"
+
+
+// Setup k for each node
+void graph_clustering::init(unordered_map<int,cluster> & clusters){
+    for (std::unordered_map<int,cluster>::iterator it = clusters.begin(); it != clusters.end(); it++)
+        for(std::unordered_map<string,node&>::iterator cit = it->second.chunks_.begin(); cit != it->second.chunks_.end(); cit++)
+            cit->second.k = k(cit->second);
+}
+
 // at beginning, graph should run this function to know its initial modularity
 void graph_clustering::calculate_modularity(unordered_map<int,cluster> & clusters) {
-    
+    for (std::unordered_map<int,cluster>::iterator i = clusters.begin(); i != clusters.end(); i++){
+        for (std::unordered_map<int,cluster>::iterator j = i++; j != clusters.end(); j++){
+            cout<<"Cluster ("<<i->first << ","<<j->first<<")"<<endl;
+
+            //global_modularity_ = std::max(global_modularity_, )
+        }
+    }
 }
 
 /*when doing the hierarchical clustering, it does clustering based on the delta_modularity in a greedy way

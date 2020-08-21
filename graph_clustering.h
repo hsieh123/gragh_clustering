@@ -18,7 +18,7 @@ using namespace std;
 class node{
 public:
     string chunk_ID_;
-    //list<pair<string,int>> adjacent_nodes_;
+    int32_t k;
     unordered_map<string,int> adjacent_nodes_;
 };
 
@@ -50,9 +50,10 @@ public:
 // in this matrix every edge will be stored twice, when go over all edges please keep it in mind!!
 // e.g, the modularity requires you to calculate the summation of all edges' weight, if you add all weight in the matrix please divide 2
     unordered_map<string,node&> graph_matrix;
-    size_t global_modularity_;
+    size_t global_modularity_ = 0;
     long max_delta_modularity_;
     
+    void init(unordered_map<int, cluster>&);
     void calculate_modularity(unordered_map<int, cluster>&);
     void calculate_delta_modularity(unordered_map<int, cluster>&);
     void clustering_file_based(unordered_map<int, cluster>&);

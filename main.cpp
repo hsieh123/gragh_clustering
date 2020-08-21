@@ -109,6 +109,7 @@ int main() {
         clusters.emplace(clst7.cluster_ID_,clst7);
 
 
+    graphClustering.init(clusters); // calculate k for each node
     graphClustering.clustering_chunk_based(clusters);
     //graphClustering.clustering_file_based(clusters);
 
