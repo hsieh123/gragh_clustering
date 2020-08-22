@@ -14,22 +14,67 @@ void graph_clustering::init(unordered_map<int,cluster> & clusters){
             D(cout<<"k="<<cit->second.k<<endl);
             global_total_sum_ += cit->second.k;
         }
+        it->second.k = k(it->second);
     }
     global_total_sum_ = global_total_sum_ / 2;
 }
 
 // at beginning, graph should run this function to know its initial modularity
-void graph_clustering::calculate_modularity(unordered_map<int,cluster> & clusters) {
+std::tuple<int,int> graph_clustering::calculate_modularity(unordered_map<int,cluster> & clusters) {
+    
+    int cluster_to_merge1=-1, cluster_to_merge2=-1;
+    global_modularity_ = 0;
     for (std::unordered_map<int,cluster>::iterator i = clusters.begin(); i != clusters.end(); i++){
-        for (std::unordered_map<int,cluster>::iterator j = i++; j != clusters.end(); j++){
+        for (std::unordered_map<int,cluster>::iterator j = std::next(i); j != clusters.end(); j++){
             D(cout<<"Cluster ("<<i->first << ","<<j->first<<")"<<endl);
             D(cout<<"A("<<i->first << ","<<j->first<<")="<<A(i->second, j->second)<<"  ");
-            D(cout<<"k("<<i->first<<")="<<k(i->second)<<"  ");
-            D(cout<<"k("<<j->first<<")="<<k(j->second)<<endl);
-            D(cout<<"Q="<<(A(i->second, j->second)-(k(i->second)*k(j->second)/global_total_sum_))/global_total_sum_<<endl);
+            D(cout<<"k("<<i->first<<")="<<i->second.k<<"  ");
+            D(cout<<"k("<<j->first<<")="<<j->second.k<<endl);
+            D(cout<<"Q="<<(A(i->second, j->second)-(i->second.k*j->second.k/global_total_sum_))/global_total_sum_<<endl);
 
-            global_modularity_ = std::max(global_modularity_, 
-                (A(i->second, j->second)-(k(i->second)*k(j->second)/global_total_sum_))/global_total_sum_);
+            // Check if cluster i and cluster j merger will exceed primer capacity limit
+            if ((i->second.chunks_.size()+j->second.chunks_.size())>PRIMER_SIZE) {
+                D(cout<<"Cluster size combined ("<<i->second.chunks_.size()+j->second.chunks_.size()<<") exceeded maximum PRIMER_SIZE("<<PRIMER_SIZE<<"), try next"<<endl);
+                continue;
+            }
+            
+            //global_modularity_ = std::max(global_modularity_, 
+            //    (A(i->second, j->second)-(k(i->second)*k(j->second)/global_total_sum_))/global_total_sum_);
+            
+            // Calculate modularity if cluster i and cluster j merge
+            float Q = (A(i->second, j->second)-(i->second.k*j->second.k/global_total_sum_))/global_total_sum_;
+            if(global_modularity_ < Q) {
+                global_modularity_ = Q;
+                cluster_to_merge1 = i->first;
+                cluster_to_merge2 = j->first;
+            }
+        }
+    }
+    return std::make_tuple(cluster_to_merge1,cluster_to_merge2);
+}
+
+void graph_clustering::merge_clusters(unordered_map<int, cluster>& clusters, std::tuple<int,int> vertices) {
+    std::unordered_map<int,cluster>::iterator v1_it = clusters.find(get<0>(vertices));
+    std::unordered_map<int,cluster>::iterator v2_it = clusters.find(get<1>(vertices));
+    if(v1_it ==clusters.end() || v2_it ==clusters.end())
+        return;
+
+    // Insert every chunks(nodes) in cluster 2 into cluster 1
+    for(std::unordered_map<string,node&>::iterator cit = v2_it->second.chunks_.begin(); cit != v2_it->second.chunks_.end(); cit++){
+        v1_it->second.chunks_.emplace(cit->first,cit->second);
+    }
+    // Delete cluster 2 from clusters
+    clusters.erase(v2_it);
+
+    // Update cluster k
+    v1_it->second.k = k(v1_it->second);
+}
+
+void graph_clustering::print_clusters(unordered_map<int,cluster> & clusters){
+    for (auto const& cluster : clusters) {
+        D(cout<<"Cluster "<<cluster.first<<endl);
+        for (auto const& node: cluster.second.chunks_){
+            D(cout<<"  "<<node.first<<endl);
         }
     }
 }
@@ -41,22 +86,19 @@ you only have to recalculate the nodes in the clusters that you try to merge
 We have to do this step to decrease our computing complexity*/
 
 void graph_clustering::calculate_delta_modularity(unordered_map<int,cluster> & clusters) {
-    cout << "k0: " << k(clusters[0].chunks_.begin()->second);
-    cout << "  << should be 3"<<endl;
-    cout << "A04: " << A(clusters[0].chunks_.begin()->second,clusters[4].chunks_.begin()->second);
-    cout << "  << should be 2" <<endl;
-    cout << "A74: " << A(clusters[0].chunks_.begin()->second,clusters[7].chunks_.begin()->second);
-    cout << "  << should be 0"<<endl;
-    cout << "A12(cluster,node): " << A(clusters[1],clusters[2].chunks_.begin()->second);
-    cout << "  << should be 1"<<endl;
-    cout << "A15(clusters): "<<A(clusters[1],clusters[5]);
-    cout << "  << should be 2" <<endl;
-    cout << "A07(clusters): "<<A(clusters[0],clusters[7]);
-    cout << "  << should be 0" <<endl;
+    D(cout << "k0: " << k(clusters[0].chunks_.begin()->second));
+    D(cout << "  << should be 3"<<endl);
+    D(cout << "A04: " << A(clusters[0].chunks_.begin()->second,clusters[4].chunks_.begin()->second));
+    D(cout << "  << should be 2" <<endl);
+    D(cout << "A74: " << A(clusters[0].chunks_.begin()->second,clusters[7].chunks_.begin()->second));
+    D(cout << "  << should be 0"<<endl);
+    D(cout << "A12(cluster,node): " << A(clusters[1],clusters[2].chunks_.begin()->second));
+    D(cout << "  << should be 1"<<endl);
+    D(cout << "A15(clusters): "<<A(clusters[1],clusters[5]));
+    D(cout << "  << should be 2" <<endl);
+    D(cout << "A07(clusters): "<<A(clusters[0],clusters[7]));
+    D(cout << "  << should be 0" <<endl);
 }
-
-
-
 
 
 /*first complete original algorithm, then add some "if" statement for following corner cases
@@ -69,8 +111,19 @@ after chunk_based clustering, please write the result to file so that we can reu
  The output should be primers (just clusters) and chunks in the primer
 */
 void graph_clustering::clustering_chunk_based(unordered_map<int,cluster> & clusters) {
-    calculate_modularity(clusters);
     calculate_delta_modularity(clusters);
+    while (1){
+        print_clusters(clusters);
+        std::tuple<int,int> max_mod_clusters = calculate_modularity(clusters);
+        if(get<0>(max_mod_clusters)==-1) {
+            //No modularity increase
+            break;
+        }
+        D(cout<<"Clusters("<<get<0>(max_mod_clusters)<<","<<get<1>(max_mod_clusters)<<") Modularity="<<global_modularity_<<endl);
+        merge_clusters(clusters,max_mod_clusters);
+    }
+    D(cout<<"After clustering_chunk_based():"<<endl);
+    print_clusters(clusters);
 }
 
 
@@ -91,9 +144,8 @@ void graph_clustering::clustering_file_based(unordered_map<int,cluster> &) {
 
 int32_t graph_clustering::k(node& n) {
     int32_t weight_sum=0;
-    for (std::unordered_map<string,int>::iterator it= n.adjacent_nodes_.begin(); it!=n.adjacent_nodes_.end(); it++) {
-        weight_sum += it->second;
-    }
+    for (auto const& adj_chunk : n.adjacent_nodes_)
+        weight_sum += adj_chunk.second;
     return weight_sum;
 }
 
@@ -101,12 +153,21 @@ int32_t graph_clustering::k(cluster& c) {
     // Check for each nodes in a cluster, check if its adjacent nodes existed in the cluster
     // If not existed, add weight to weight_sum
     int32_t weight_sum=0;
-    for (std::unordered_map<string,node&>::iterator it= c.chunks_.begin(); it!=c.chunks_.end(); it++) {
-        for(std::unordered_map<string,int>::iterator nit = it->second.adjacent_nodes_.begin(); nit != it->second.adjacent_nodes_.end(); nit++) {
-            if (c.chunks_.find(nit->first) == c.chunks_.end()) {
+    // for (std::unordered_map<string,node&>::iterator it= c.chunks_.begin(); it!=c.chunks_.end(); it++) {
+    //     for(std::unordered_map<string,int>::iterator nit = it->second.adjacent_nodes_.begin(); nit != it->second.adjacent_nodes_.end(); nit++) {
+    //         if (c.chunks_.find(nit->first) == c.chunks_.end()) {
+    //             // The current adjacent node doesn't appear in the cluster
+    //             // Add the weight from weight_sum
+    //             weight_sum += nit->second;
+    //         }
+    //     }
+    // }
+    for (auto const& chunk: c.chunks_){
+        for (auto const& adj_chunk: chunk.second.adjacent_nodes_) {
+            if(c.chunks_.find(adj_chunk.first) == c.chunks_.end()){
                 // The current adjacent node doesn't appear in the cluster
                 // Add the weight from weight_sum
-                weight_sum += nit->second;
+                weight_sum += adj_chunk.second;
             }
         }
     }
@@ -120,15 +181,15 @@ int32_t graph_clustering::A(node& n1, node& n2) {
 
 int32_t graph_clustering::A(cluster& c, node& n) {
     int32_t weight_sum=0;
-    for (std::unordered_map<string,node&>::iterator it = c.chunks_.begin(); it != c.chunks_.end(); it++)
-        weight_sum += A(it->second, n);
+    for (auto const& chunk : c.chunks_)
+        weight_sum += A(chunk.second, n);
     return weight_sum;
 }
 
 // Computational intensive since we need to match every chunk in every cluster. Better way?
 int32_t graph_clustering::A(cluster& c1, cluster& c2) {
     int32_t weight_sum=0;
-    for (std::unordered_map<string,node&>::iterator it = c2.chunks_.begin(); it != c2.chunks_.end(); it++)
-        weight_sum += A(c1,it->second);
+    for (auto const& chunk : c2.chunks_)
+        weight_sum += A(c1,chunk.second);
     return weight_sum;
 }

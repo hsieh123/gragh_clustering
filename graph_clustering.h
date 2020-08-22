@@ -23,6 +23,9 @@ using namespace std;
 #define D(x) do{}while(0)
 #endif
 
+#define PRIMER_SIZE 736
+#define PRIMER_SIZE 4
+
 // node == chunk
 class node{
 public:
@@ -61,16 +64,17 @@ public:
 // e.g, the modularity requires you to calculate the summation of all edges' weight, if you add all weight in the matrix please divide 2
 // i.e. see graph_clustering::init
     unordered_map<string,node&> graph_matrix;
-    float global_modularity_ = 0;
+    float global_modularity_;
     float global_total_sum_ = 0;
     float max_delta_modularity_;
     
     void init(unordered_map<int, cluster>&);
-    void calculate_modularity(unordered_map<int, cluster>&);
+    std::tuple<int,int> calculate_modularity(unordered_map<int, cluster>&);
+    void merge_clusters(unordered_map<int, cluster>&, std::tuple<int,int>);
     void calculate_delta_modularity(unordered_map<int, cluster>&);
     void clustering_file_based(unordered_map<int, cluster>&);
     void clustering_chunk_based(unordered_map<int, cluster>&);
-
+    void print_clusters(unordered_map<int, cluster>&);
 
 private:
     //set<pair<node&,node&>>epsilon; //records nodes in the same cluster
