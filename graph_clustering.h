@@ -14,6 +14,15 @@
 
 using namespace std;
 
+#ifndef DEBUG 
+#define DEBUG 1 // set debug mode
+#endif
+#ifdef DEBUG 
+#define D(x) (x)
+#else 
+#define D(x) do{}while(0)
+#endif
+
 // node == chunk
 class node{
 public:
@@ -26,6 +35,7 @@ public:
 class cluster{
 public:
     int cluster_ID_;
+    int32_t k; //constructed during merge
     unordered_map<string,node&> chunks_;
 };
 
@@ -49,9 +59,11 @@ public:
 
 // in this matrix every edge will be stored twice, when go over all edges please keep it in mind!!
 // e.g, the modularity requires you to calculate the summation of all edges' weight, if you add all weight in the matrix please divide 2
+// i.e. see graph_clustering::init
     unordered_map<string,node&> graph_matrix;
-    size_t global_modularity_ = 0;
-    long max_delta_modularity_;
+    float global_modularity_ = 0;
+    float global_total_sum_ = 0;
+    float max_delta_modularity_;
     
     void init(unordered_map<int, cluster>&);
     void calculate_modularity(unordered_map<int, cluster>&);
@@ -59,9 +71,11 @@ public:
     void clustering_file_based(unordered_map<int, cluster>&);
     void clustering_chunk_based(unordered_map<int, cluster>&);
 
-private:
 
+private:
+    //set<pair<node&,node&>>epsilon; //records nodes in the same cluster
     int32_t k(node&);
+    int32_t k(cluster&);
     int32_t A(node&, node&);
     int32_t A(cluster&, node&);
     int32_t A(cluster&, cluster&);

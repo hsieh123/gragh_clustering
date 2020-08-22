@@ -7,18 +7,29 @@
 
 // Setup k for each node
 void graph_clustering::init(unordered_map<int,cluster> & clusters){
-    for (std::unordered_map<int,cluster>::iterator it = clusters.begin(); it != clusters.end(); it++)
-        for(std::unordered_map<string,node&>::iterator cit = it->second.chunks_.begin(); cit != it->second.chunks_.end(); cit++)
+    for (std::unordered_map<int,cluster>::iterator it = clusters.begin(); it != clusters.end(); it++){
+        for(std::unordered_map<string,node&>::iterator cit = it->second.chunks_.begin(); cit != it->second.chunks_.end(); cit++){
+            D(cout << "Init <c,n>=<"<<it->first<<","<<cit->first<<">  ");
             cit->second.k = k(cit->second);
+            D(cout<<"k="<<cit->second.k<<endl);
+            global_total_sum_ += cit->second.k;
+        }
+    }
+    global_total_sum_ = global_total_sum_ / 2;
 }
 
 // at beginning, graph should run this function to know its initial modularity
 void graph_clustering::calculate_modularity(unordered_map<int,cluster> & clusters) {
     for (std::unordered_map<int,cluster>::iterator i = clusters.begin(); i != clusters.end(); i++){
         for (std::unordered_map<int,cluster>::iterator j = i++; j != clusters.end(); j++){
-            cout<<"Cluster ("<<i->first << ","<<j->first<<")"<<endl;
+            D(cout<<"Cluster ("<<i->first << ","<<j->first<<")"<<endl);
+            D(cout<<"A("<<i->first << ","<<j->first<<")="<<A(i->second, j->second)<<"  ");
+            D(cout<<"k("<<i->first<<")="<<k(i->second)<<"  ");
+            D(cout<<"k("<<j->first<<")="<<k(j->second)<<endl);
+            D(cout<<"Q="<<(A(i->second, j->second)-(k(i->second)*k(j->second)/global_total_sum_))/global_total_sum_<<endl);
 
-            //global_modularity_ = std::max(global_modularity_, )
+            global_modularity_ = std::max(global_modularity_, 
+                (A(i->second, j->second)-(k(i->second)*k(j->second)/global_total_sum_))/global_total_sum_);
         }
     }
 }
@@ -58,6 +69,7 @@ after chunk_based clustering, please write the result to file so that we can reu
  The output should be primers (just clusters) and chunks in the primer
 */
 void graph_clustering::clustering_chunk_based(unordered_map<int,cluster> & clusters) {
+    calculate_modularity(clusters);
     calculate_delta_modularity(clusters);
 }
 
@@ -81,6 +93,22 @@ int32_t graph_clustering::k(node& n) {
     int32_t weight_sum=0;
     for (std::unordered_map<string,int>::iterator it= n.adjacent_nodes_.begin(); it!=n.adjacent_nodes_.end(); it++) {
         weight_sum += it->second;
+    }
+    return weight_sum;
+}
+
+int32_t graph_clustering::k(cluster& c) {
+    // Check for each nodes in a cluster, check if its adjacent nodes existed in the cluster
+    // If not existed, add weight to weight_sum
+    int32_t weight_sum=0;
+    for (std::unordered_map<string,node&>::iterator it= c.chunks_.begin(); it!=c.chunks_.end(); it++) {
+        for(std::unordered_map<string,int>::iterator nit = it->second.adjacent_nodes_.begin(); nit != it->second.adjacent_nodes_.end(); nit++) {
+            if (c.chunks_.find(nit->first) == c.chunks_.end()) {
+                // The current adjacent node doesn't appear in the cluster
+                // Add the weight from weight_sum
+                weight_sum += nit->second;
+            }
+        }
     }
     return weight_sum;
 }
