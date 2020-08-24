@@ -182,7 +182,15 @@ int main() {
 
     graphClustering.init(clusters); // calculate k for each node
     graphClustering.clustering_chunk_based(clusters);
+    graphClustering.save_clusters(clusters);
+    
+    // clear clusters to test load_clusters from file global_filename_
+    clusters.clear();
+    
+    graphClustering.load_clusters(clusters);
     //graphClustering.clustering_file_based(clusters);
-
+    D(cout<<"Loaded cluster:"<<endl);
+    if(DEBUG) graphClustering.print_clusters(clusters);
+    //clusters are ready from this point
     return 0;
 }

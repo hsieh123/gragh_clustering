@@ -66,9 +66,9 @@ void graph_clustering::merge_clusters(unordered_map<int, cluster>& clusters, std
 
 void graph_clustering::print_clusters(unordered_map<int,cluster> & clusters){
     for (auto const& cluster : clusters) {
-        D(cout<<"Cluster "<<cluster.first<<endl);
+        cout<<"Cluster "<<cluster.first<<endl;
         for (auto const& node: cluster.second.chunks_){
-            D(cout<<"  "<<node.first<<endl);
+            cout<<"  "<<node.first<<endl;
         }
     }
 }
@@ -186,4 +186,69 @@ int32_t graph_clustering::A(cluster& c1, cluster& c2) {
     for (auto const& chunk : c2.chunks_)
         weight_sum += A(c1,chunk.second);
     return weight_sum;
+}
+
+void graph_clustering::save_clusters(unordered_map<int, cluster>& clusters) {
+    ofstream of;
+	of.open(global_filename_);
+	if(!of.is_open()){
+		cerr<<"Error in writeing all FileRef to "<< global_filename_<<endl;
+		return;
+	}
+	for(auto const & cluster : clusters) {
+		// print cluster
+		of << cluster.first <<endl;
+		// print number of chunks in this cluster
+		of << cluster.second.chunks_.size()<<endl;
+		for (auto const& chunk : cluster.second.chunks_) {
+		    // print chunkID
+            of << chunk.first<<" ";
+            // adjacent_node weight adjacent_node weight ...
+            for (auto const& adj_node: chunk.second.adjacent_nodes_) {
+                of << adj_node.first <<" "<<adj_node.second<<" ";
+            }
+		    of << endl;
+        }
+	}
+	of.close();
+}
+
+void graph_clustering::load_clusters(unordered_map<int, cluster>& clusters) {
+    ifstream fs(global_filename_, ios_base::in);
+    if (fs.fail()) {
+        cerr << "open clusters file:" << global_filename_ << " fails!\n";
+		return;
+    }
+    string cluster_id, chunk_id, chunk_adj_nodes, adj_node, chunk_num;
+    int adj_weight;
+    stringstream ss;
+    cluster *cl;
+    node *n;
+    while(getline(fs, cluster_id)) {
+        if (cluster_id.size()<1 || cluster_id[0]== '#')
+            continue;
+        cl = new cluster(stoi(cluster_id));
+        // read number of chunks in this cluster
+        getline(fs, chunk_num);
+        for (int i=0; i<stoi(chunk_num); i++){
+            // get each chunk and its adjacent nodes
+            getline(fs,chunk_adj_nodes);
+            ss.clear();
+            ss.str(chunk_adj_nodes);
+		    // read adjacent_node weight adjacent_node weight ...
+		    ss>>chunk_id;
+            n = new node(chunk_id);
+            while(1) {
+                // get each adjacent node id and weight
+                ss>>adj_node>>adj_weight;
+                n->adjacent_nodes_.emplace(adj_node,adj_weight);
+                if (ss.fail())
+                    break;
+            }
+            n->k = k(*n);
+            cl->chunks_.emplace(chunk_id, *n);
+        }
+        cl->k = k(*cl);
+        clusters.emplace(cl->cluster_ID_,*cl);
+    }
 }

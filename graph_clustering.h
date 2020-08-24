@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <set>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -29,6 +31,8 @@ using namespace std;
 // node == chunk
 class node{
 public:
+    node(string id) {chunk_ID_ = id;}
+    node(){}
     string chunk_ID_;
     int32_t k;
     unordered_map<string,int> adjacent_nodes_;
@@ -37,6 +41,8 @@ public:
 // at beginning, one cluster is one node (chunk). after assignment, one cluster is a set of chunks, those chunks will be stored in one primer
 class cluster{
 public:
+    cluster(int id) {cluster_ID_ = id;}
+    cluster(){}
     int cluster_ID_;
     int32_t k; //constructed during merge
     unordered_map<string,node&> chunks_;
@@ -67,6 +73,7 @@ public:
     float global_modularity_;
     float global_total_sum_ = 0;
     float max_delta_modularity_;
+    string global_filename_ = "clusters.dat";
     
     void init(unordered_map<int, cluster>&);
     std::tuple<int,int> calculate_modularity(unordered_map<int, cluster>&);
@@ -75,6 +82,8 @@ public:
     void clustering_file_based(unordered_map<int, cluster>&);
     void clustering_chunk_based(unordered_map<int, cluster>&);
     void print_clusters(unordered_map<int, cluster>&);
+    void save_clusters(unordered_map<int, cluster>&);
+    void load_clusters(unordered_map<int, cluster>&);
 
 private:
     //set<pair<node&,node&>>epsilon; //records nodes in the same cluster
