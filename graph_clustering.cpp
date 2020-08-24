@@ -26,11 +26,6 @@ std::tuple<int,int> graph_clustering::calculate_modularity(unordered_map<int,clu
     global_modularity_ = 0;
     for (std::unordered_map<int,cluster>::iterator i = clusters.begin(); i != clusters.end(); i++){
         for (std::unordered_map<int,cluster>::iterator j = std::next(i); j != clusters.end(); j++){
-            D(cout<<"Cluster ("<<i->first << ","<<j->first<<")"<<endl);
-            D(cout<<"A("<<i->first << ","<<j->first<<")="<<A(i->second, j->second)<<"  ");
-            D(cout<<"k("<<i->first<<")="<<i->second.k<<"  ");
-            D(cout<<"k("<<j->first<<")="<<j->second.k<<endl);
-            D(cout<<"Q="<<(A(i->second, j->second)-(i->second.k*j->second.k/global_total_sum_))/global_total_sum_<<endl);
 
             // Check if cluster i and cluster j merger will exceed primer capacity limit
             if ((i->second.chunks_.size()+j->second.chunks_.size())>PRIMER_SIZE) {
@@ -38,15 +33,14 @@ std::tuple<int,int> graph_clustering::calculate_modularity(unordered_map<int,clu
                 continue;
             }
             
-            //global_modularity_ = std::max(global_modularity_, 
-            //    (A(i->second, j->second)-(k(i->second)*k(j->second)/global_total_sum_))/global_total_sum_);
-            
             // Calculate modularity if cluster i and cluster j merge
             float Q = (A(i->second, j->second)-(i->second.k*j->second.k/global_total_sum_))/global_total_sum_;
             if(global_modularity_ < Q) {
                 global_modularity_ = Q;
                 cluster_to_merge1 = i->first;
                 cluster_to_merge2 = j->first;
+                D(cout<<"Cluster ("<<i->first << ","<<j->first<<")"<<endl);
+                D(cout<<"Update Q="<<(A(i->second, j->second)-(i->second.k*j->second.k/global_total_sum_))/global_total_sum_<<endl);
             }
         }
     }
