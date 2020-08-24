@@ -25,8 +25,8 @@ using namespace std;
 #define D(x) do{}while(0)
 #endif
 
-//#define PRIMER_SIZE 736
-#define PRIMER_SIZE 4
+#define PRIMER_SIZE 736
+// #define PRIMER_SIZE 4
 
 // node == chunk
 class node{
