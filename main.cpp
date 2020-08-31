@@ -1,5 +1,9 @@
 #include <iostream>
 #include "graph_clustering.h"
+#include "global.h"
+#include "data_structure.h"
+#include "hashfile_to_map.h"
+
 using namespace std;
 //  assume we have graph blow
 //
@@ -39,7 +43,9 @@ int main() {
     // test for clustering_chunk_based
     //inital data set for clustering_chunk_based
     graph_clustering graphClustering;
+    unordered_map<int,cluster> clusters;
 
+    if(false){
         node node0,node1,node2,node3,node4,node5,node6,node7;
         node node8,node9,node10,node11,node12,node13,node14,node15;
         node0.chunk_ID_="chunk0";    node1.chunk_ID_="chunk1";
@@ -106,7 +112,7 @@ int main() {
         node15.adjacent_nodes_.emplace("chunk14",1);
         node15.adjacent_nodes_.emplace("chunk13",2);
 
-
+        
         graphClustering.graph_matrix.emplace(node0.chunk_ID_,node0);
         graphClustering.graph_matrix.emplace(node1.chunk_ID_,node1);
         graphClustering.graph_matrix.emplace(node2.chunk_ID_,node2);
@@ -123,9 +129,6 @@ int main() {
         graphClustering.graph_matrix.emplace(node13.chunk_ID_,node13);
         graphClustering.graph_matrix.emplace(node14.chunk_ID_,node14);
         graphClustering.graph_matrix.emplace(node15.chunk_ID_,node15);
-
-
-    unordered_map<int,cluster> clusters;
 
         cluster clst0,clst1,clst2,clst3,clst4,clst5,clst6,clst7;
         cluster clst8,clst9,clst10,clst11,clst12,clst13,clst14,clst15;
@@ -178,7 +181,37 @@ int main() {
         clusters.emplace(clst13.cluster_ID_,clst13);
         clusters.emplace(clst14.cluster_ID_,clst14);
         clusters.emplace(clst15.cluster_ID_,clst15);
+    }
 
+
+    load_fileref(g_file_filename_);
+    load_chunkref(g_chunk_filename_);
+    load_finish();
+
+    int cluster_cnt = 0;
+
+    for(pair<string, ChunkRef*> cp: all_chunkref){
+        node n(cp.first);
+        for(pair<string, ChunkRef*> cp_neighbor: all_chunkref) {
+            if (cp_neighbor.first == cp.first) 
+                continue;
+            int weight = 0;
+            // check if files appears in one node's file list also appear in the second node's file list
+            // if yes, add to the weight
+            for(auto cp_f_it = cp.second->file_ref_map.begin(); cp_f_it != cp.second->file_ref_map.end(); cp_f_it++) {
+                weight += cp_neighbor.second->file_ref_map.count(cp_f_it->first);
+            }
+            // if two nodes belongs to the same files, add them in the graph
+            if(weight != 0) {
+                n.adjacent_nodes_.emplace(cp_neighbor.first,weight);
+            }
+        }
+        graphClustering.graph_matrix.emplace(n.chunk_ID_,n);
+        cluster cl(cluster_cnt);
+        cl.chunks_.emplace(n.chunk_ID_,n);
+        clusters.emplace(cl.cluster_ID_,cl);
+        cluster_cnt++;
+    }
 
     graphClustering.init(clusters); // calculate k for each node
     graphClustering.clustering_chunk_based(clusters);
