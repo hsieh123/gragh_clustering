@@ -188,8 +188,7 @@ int main() {
     load_chunkref(g_chunk_filename_);
     load_finish();
 
-    int cluster_cnt = 0;
-    int file_cnt = 0;
+    int cluster_cnt = 0, file_cnt=0, chunk_cnt=0;
     node *n, *neighbor_n;
 
     for(pair<string, FileRef*> fp: all_fileref){
@@ -243,11 +242,11 @@ int main() {
                 //nit->second = *n; // no need to re-assign
                 //nit->second.k = 1; //set a tag
             //}
+            chunk_cnt++;
         }
         file_cnt++;
-        if(file_cnt == 100)
-            break;
     }
+    cout<<"Processed "<<file_cnt<<" files into graph cluster"<<endl;
     // check graph_matrix is modified by scanning k
     // CONFIRMED the modification to graph_matrix are effective
     cluster *cl;
@@ -258,6 +257,7 @@ int main() {
         clusters.emplace(cl->cluster_ID_,*cl);
         cluster_cnt++;
     }
+    cout<<"Created "<<cluster_cnt<<" clusters based on "<<file_cnt<<" files and "<<chunk_cnt<<" chunks"<<endl;
     // }
 
     // create clusters from graphClustering.graph_matrix
@@ -287,8 +287,11 @@ int main() {
     // }
 
     graphClustering.init(clusters); // calculate k for each node
+    cout <<"Graph clustering initiated"<<endl;
     graphClustering.clustering_chunk_based(clusters);
+    cout <<"Graph clustering partitioned"<<endl;
     graphClustering.save_clusters(clusters);
+    cout <<"Graph clustering saved to "<<graphClustering.global_filename_<<endl;
     
     // clear clusters to test load_clusters from file global_filename_
     clusters.clear();
