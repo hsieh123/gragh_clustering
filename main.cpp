@@ -189,29 +189,67 @@ int main() {
     load_finish();
 
     int cluster_cnt = 0;
+    node *n;
 
-    for(pair<string, ChunkRef*> cp: all_chunkref){
-        node n(cp.first);
-        for(pair<string, ChunkRef*> cp_neighbor: all_chunkref) {
-            if (cp_neighbor.first == cp.first) 
-                continue;
-            int weight = 0;
-            // check if files appears in one node's file list also appear in the second node's file list
-            // if yes, add to the weight
-            for(auto cp_f_it = cp.second->file_ref_map.begin(); cp_f_it != cp.second->file_ref_map.end(); cp_f_it++) {
-                weight += cp_neighbor.second->file_ref_map.count(cp_f_it->first);
+    for(pair<string, FileRef*> fp: all_fileref){
+        // for every pair of chunks, create nodes and increaes their weight
+        for (std::unordered_map<string, ChunkRef*>::iterator i = fp.second->internal_chunk_map.begin(); i != fp.second->internal_chunk_map.end(); i++){
+            // if chunk i not existed in graph_matrix, create a new node for this chunk
+            unordered_map<string,node&>::iterator nit = graphClustering.graph_matrix.find(i->first);
+            if (nit==graphClustering.graph_matrix.end()) {
+                // first time see the chunk, create a new node for it
+                n = new node(i->first);
+            } else {
+                // saw this chunk, get its node
+                n = &nit->second;
             }
-            // if two nodes belongs to the same files, add them in the graph
-            if(weight != 0) {
-                n.adjacent_nodes_.emplace(cp_neighbor.first,weight);
+            // pair chunk i with rest of the chunks, chunk j
+            // add them into node->adjacent_nodes
+            for (std::unordered_map<string, ChunkRef*>::iterator j = std::next(i); j != fp.second->internal_chunk_map.end(); j++){
+                // if j is already in n->adjacent_nodes, then its weight++, else insert j into n->adjacent_nodes with weight=1
+                unordered_map<string,int>::iterator neighbor_it = n->adjacent_nodes_.find(j->first);
+                if(neighbor_it == n->adjacent_nodes_.end()) {
+                    // j is not in i's neighbor list, add it!
+                    n->adjacent_nodes_.emplace(j->first, 1);
+                } else {
+                    // found j in i's adjacent_nodes, weight++
+                    neighbor_it->second++;
+                }
+            }
+            // make sure the above changes reflect to graph_matrix
+            if (nit==graphClustering.graph_matrix.end()) {
+                graphClustering.graph_matrix.emplace(n->chunk_ID_,*n);
+            } else {
+                nit->second = *n;
             }
         }
-        graphClustering.graph_matrix.emplace(n.chunk_ID_,n);
-        cluster cl(cluster_cnt);
-        cl.chunks_.emplace(n.chunk_ID_,n);
-        clusters.emplace(cl.cluster_ID_,cl);
-        cluster_cnt++;
     }
+    
+    // create clusters from graphClustering.graph_matrix
+
+    
+    // for(pair<string, ChunkRef*> cp: all_chunkref){
+    //     node n(cp.first);
+    //     for(pair<string, ChunkRef*> cp_neighbor: all_chunkref) {
+    //         if (cp_neighbor.first == cp.first) 
+    //             continue;
+    //         int weight = 0;
+    //         // check if files appears in one node's file list also appear in the second node's file list
+    //         // if yes, add to the weight
+    //         for(auto cp_f_it = cp.second->file_ref_map.begin(); cp_f_it != cp.second->file_ref_map.end(); cp_f_it++) {
+    //             weight += cp_neighbor.second->file_ref_map.count(cp_f_it->first);
+    //         }
+    //         // if two nodes belongs to the same files, add them in the graph
+    //         if(weight != 0) {
+    //             n.adjacent_nodes_.emplace(cp_neighbor.first,weight);
+    //         }
+    //     }
+    //     graphClustering.graph_matrix.emplace(n.chunk_ID_,n);
+    //     cluster cl(cluster_cnt);
+    //     cl.chunks_.emplace(n.chunk_ID_,n);
+    //     clusters.emplace(cl.cluster_ID_,cl);
+    //     cluster_cnt++;
+    // }
 
     graphClustering.init(clusters); // calculate k for each node
     graphClustering.clustering_chunk_based(clusters);
