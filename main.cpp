@@ -189,16 +189,18 @@ int main() {
     load_finish();
 
     int cluster_cnt = 0;
-    node *n;
+    int file_cnt = 0;
+    node *n, *neighbor_n;
 
     for(pair<string, FileRef*> fp: all_fileref){
-        // for every pair of chunks, create nodes and increaes their weight
+        // for every pair of chunks, create nodes and increase their weight
         for (std::unordered_map<string, ChunkRef*>::iterator i = fp.second->internal_chunk_map.begin(); i != fp.second->internal_chunk_map.end(); i++){
             // if chunk i not existed in graph_matrix, create a new node for this chunk
             unordered_map<string,node&>::iterator nit = graphClustering.graph_matrix.find(i->first);
             if (nit==graphClustering.graph_matrix.end()) {
                 // first time see the chunk, create a new node for it
                 n = new node(i->first);
+                n->k = 0;
             } else {
                 // saw this chunk, get its node
                 n = &nit->second;
@@ -215,16 +217,49 @@ int main() {
                     // found j in i's adjacent_nodes, weight++
                     neighbor_it->second++;
                 }
+                // add the neighbor's weight for this (n,j) pair
+                // find neighbor node in graph_matrix, if not found, create one
+                // if found, add neighbor node and weight
+                unordered_map<string,node&>::iterator graph_it = graphClustering.graph_matrix.find(j->first);
+                if(graph_it == graphClustering.graph_matrix.end()) {
+                    neighbor_n = new node(j->first);
+                    neighbor_n->k = 0;
+                    neighbor_n->adjacent_nodes_.emplace(i->first,1);
+                    graphClustering.graph_matrix.emplace(neighbor_n->chunk_ID_,*neighbor_n);
+                }else{
+                    // check if the j node in graph_matrix already has i in its adjacent_nodes
+                    unordered_map<string,int>::iterator i_it = graph_it->second.adjacent_nodes_.find(i->first);
+                    if(i_it == graph_it->second.adjacent_nodes_.end()){
+                        graph_it->second.adjacent_nodes_.emplace(i->first,1);
+                    }else{
+                        i_it->second++;
+                    }
+                }
             }
             // make sure the above changes reflect to graph_matrix
             if (nit==graphClustering.graph_matrix.end()) {
                 graphClustering.graph_matrix.emplace(n->chunk_ID_,*n);
-            } else {
-                nit->second = *n;
-            }
+            } //else {
+                //nit->second = *n; // no need to re-assign
+                //nit->second.k = 1; //set a tag
+            //}
         }
+        file_cnt++;
+        if(file_cnt == 100)
+            break;
     }
-    
+    // check graph_matrix is modified by scanning k
+    // CONFIRMED the modification to graph_matrix are effective
+    cluster *cl;
+
+    for(auto nit : graphClustering.graph_matrix) {
+        cl = new cluster(cluster_cnt);
+        cl->chunks_.emplace(nit.first,nit.second);
+        clusters.emplace(cl->cluster_ID_,*cl);
+        cluster_cnt++;
+    }
+    // }
+
     // create clusters from graphClustering.graph_matrix
 
     

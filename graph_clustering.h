@@ -17,7 +17,7 @@
 using namespace std;
 
 #ifndef DEBUG 
-#define DEBUG 1 // set debug mode
+#define DEBUG 0 // set debug mode
 #endif
 #ifdef DEBUG 
 #define D(x) (x)
