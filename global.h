@@ -45,7 +45,7 @@ constexpr hash_t hash_(char const* str, hash_t last_value = basis)
 
 string g_allfile_path = "allfile.dat";
 string g_allchunk_path = "allchunk.dat";
-string g_file_filename_ = "allfile_64k_150.dat";
-string g_chunk_filename_ = "allchunk_64k_150.dat";
+string g_file_filename_ = "allfile_64k_full.dat";
+string g_chunk_filename_ = "allchunk_64k_full.dat";
 
 #endif //CONFIGURABLE_DEDUP_GLOBAL_H
