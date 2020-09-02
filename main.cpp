@@ -288,11 +288,22 @@ int main() {
     //     clusters.emplace(cl.cluster_ID_,cl);
     //     cluster_cnt++;
     // }
-
+    // Get starting timepoint 
+    cout <<"Start clustering."<<endl;
+    auto start = std::chrono::high_resolution_clock::now();
+    
     graphClustering.init(clusters); // calculate k for each node
     cout <<"Graph clustering initiated"<<endl;
     graphClustering.clustering_chunk_based(clusters);
     cout <<"Graph clustering partitioned"<<endl;
+    
+    // Get ending timepoint 
+    auto stop = std::chrono::high_resolution_clock::now(); 
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
+  
+    cout << "Time taken by clustering: "
+         << duration.count() << " microseconds" << endl;
+
     graphClustering.save_clusters(clusters);
     cout <<"Graph clustering saved to "<<graphClustering.global_filename_<<endl;
     
