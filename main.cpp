@@ -185,8 +185,8 @@ int main() {
 
 
     load_fileref(g_file_filename_);
-    load_chunkref(g_chunk_filename_);
-    load_finish();
+    //load_chunkref(g_chunk_filename_);
+    //load_finish();
 
     int cluster_cnt = 0, file_cnt=0, chunk_cnt=0;
     node *n, *neighbor_n;
@@ -245,8 +245,11 @@ int main() {
             chunk_cnt++;
         }
         file_cnt++;
+        // Finished with this file, delete the FileRef
+        delete fp.second;
     }
     cout<<"Processed "<<file_cnt<<" files into graph cluster"<<endl;
+
     // check graph_matrix is modified by scanning k
     // CONFIRMED the modification to graph_matrix are effective
     cluster *cl;
