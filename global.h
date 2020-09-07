@@ -29,7 +29,7 @@
 #include <inttypes.h>
 using namespace std;
 
-#define PRIMER_CAPACITY 4
+#define PRIMER_CAPACITY 736
 
 extern long g_chunk_size;
 extern long g_container_size;
