@@ -29,11 +29,17 @@
 #include <inttypes.h>
 using namespace std;
 
+#define PRIMER_CAPACITY 4
+
 extern long g_chunk_size;
 extern long g_container_size;
 extern string g_dedup_trace_dir;
 extern string g_trace_summary_file;
 extern long g_file_number;
+extern string g_allfile_path;
+extern string g_allchunk_path;
+//extern unsigned short g_primer_capacity;
+extern unsigned short g_k_ratio;
 int Parse(string cfgfile);
 
 typedef std::uint64_t hash_t;
@@ -44,9 +50,5 @@ constexpr hash_t hash_(char const* str, hash_t last_value = basis)
     return *str ? hash_(str+1, (*str ^ last_value) * prime) : last_value;
 }
 
-string g_allfile_path = "allfile.dat";
-string g_allchunk_path = "allchunk.dat";
-string g_file_filename_ = "allfile_64k_full.dat";
-string g_chunk_filename_ = "allchunk_64k_full.dat";
 
 #endif //CONFIGURABLE_DEDUP_GLOBAL_H

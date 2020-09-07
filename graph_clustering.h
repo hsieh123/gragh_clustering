@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include "global.h"
 
 using namespace std;
 
@@ -24,9 +25,6 @@ using namespace std;
 #else 
 #define D(x) do{}while(0)
 #endif
-
-#define PRIMER_SIZE 736
-// #define PRIMER_SIZE 4
 
 // node == chunk
 class node{
@@ -78,7 +76,6 @@ public:
     void init(unordered_map<int, cluster>&);
     std::tuple<int,int> calculate_modularity(unordered_map<int, cluster>&);
     void merge_clusters(unordered_map<int, cluster>&, std::tuple<int,int>);
-    void calculate_delta_modularity(unordered_map<int, cluster>&);
     void clustering_file_based(unordered_map<int, cluster>&);
     void clustering_chunk_based(unordered_map<int, cluster>&);
     void print_clusters(unordered_map<int, cluster>&);

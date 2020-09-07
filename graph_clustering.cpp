@@ -3,6 +3,7 @@
 //
 
 #include "graph_clustering.h"
+#include "global.h"
 
 
 // Setup k for each node
@@ -28,8 +29,8 @@ std::tuple<int,int> graph_clustering::calculate_modularity(unordered_map<int,clu
         for (std::unordered_map<int,cluster>::iterator j = std::next(i); j != clusters.end(); j++){
 
             // Check if cluster i and cluster j merger will exceed primer capacity limit
-            if ((i->second.chunks_.size()+j->second.chunks_.size())>PRIMER_SIZE) {
-                D(cout<<"Cluster size combined ("<<i->second.chunks_.size()+j->second.chunks_.size()<<") exceeded maximum PRIMER_SIZE("<<PRIMER_SIZE<<"), try next"<<endl);
+            if ((i->second.chunks_.size()+j->second.chunks_.size())>PRIMER_CAPACITY) {
+                D(cout<<"Cluster size combined ("<<i->second.chunks_.size()+j->second.chunks_.size()<<") exceeded maximum PRIMER_CAPACITY="<<PRIMER_CAPACITY<<", try next"<<endl);
                 continue;
             }
             
@@ -73,27 +74,6 @@ void graph_clustering::print_clusters(unordered_map<int,cluster> & clusters){
     }
 }
 
-/*when doing the hierarchical clustering, it does clustering based on the delta_modularity in a greedy way
-it only merge two clusters who can increase most modularity
-according the definition of modularity, to calculate the delta_modularity, you don't have to go over all node pairs
-you only have to recalculate the nodes in the clusters that you try to merge
-We have to do this step to decrease our computing complexity*/
-
-void graph_clustering::calculate_delta_modularity(unordered_map<int,cluster> & clusters) {
-    D(cout << "k0: " << k(clusters[0].chunks_.begin()->second));
-    D(cout << "  << should be 3"<<endl);
-    D(cout << "A04: " << A(clusters[0].chunks_.begin()->second,clusters[4].chunks_.begin()->second));
-    D(cout << "  << should be 2" <<endl);
-    D(cout << "A74: " << A(clusters[0].chunks_.begin()->second,clusters[7].chunks_.begin()->second));
-    D(cout << "  << should be 0"<<endl);
-    D(cout << "A12(cluster,node): " << A(clusters[1],clusters[2].chunks_.begin()->second));
-    D(cout << "  << should be 1"<<endl);
-    D(cout << "A15(clusters): "<<A(clusters[1],clusters[5]));
-    D(cout << "  << should be 2" <<endl);
-    D(cout << "A07(clusters): "<<A(clusters[0],clusters[7]));
-    D(cout << "  << should be 0" <<endl);
-}
-
 
 /*first complete original algorithm, then add some "if" statement for following corner cases
  * 1) cluster size should lower than primer capacity
@@ -105,7 +85,6 @@ after chunk_based clustering, please write the result to file so that we can reu
  The output should be primers (just clusters) and chunks in the primer
 */
 void graph_clustering::clustering_chunk_based(unordered_map<int,cluster> & clusters) {
-    calculate_delta_modularity(clusters);
     while (1){
         print_clusters(clusters);
         std::tuple<int,int> max_mod_clusters = calculate_modularity(clusters);
@@ -119,13 +98,6 @@ void graph_clustering::clustering_chunk_based(unordered_map<int,cluster> & clust
     D(cout<<"After clustering_chunk_based():"<<endl);
     print_clusters(clusters);
 }
-
-
-/*
-please first accomplish chunk_based.
-based on the code of chunk_based clustering, this file_based should add some more constraints
-please talk with me before you start.
-*/
 
 /*
 after file_based clustering, don't have to write to file. this function will be integrated into zhichao's code.
@@ -147,15 +119,6 @@ int32_t graph_clustering::k(cluster& c) {
     // Check for each nodes in a cluster, check if its adjacent nodes existed in the cluster
     // If not existed, add weight to weight_sum
     int32_t weight_sum=0;
-    // for (std::unordered_map<string,node&>::iterator it= c.chunks_.begin(); it!=c.chunks_.end(); it++) {
-    //     for(std::unordered_map<string,int>::iterator nit = it->second.adjacent_nodes_.begin(); nit != it->second.adjacent_nodes_.end(); nit++) {
-    //         if (c.chunks_.find(nit->first) == c.chunks_.end()) {
-    //             // The current adjacent node doesn't appear in the cluster
-    //             // Add the weight from weight_sum
-    //             weight_sum += nit->second;
-    //         }
-    //     }
-    // }
     for (auto const& chunk: c.chunks_){
         for (auto const& adj_chunk: chunk.second.adjacent_nodes_) {
             if(c.chunks_.find(adj_chunk.first) == c.chunks_.end()){

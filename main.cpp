@@ -1,6 +1,6 @@
 #include <iostream>
-#include "graph_clustering.h"
 #include "global.h"
+#include "graph_clustering.h"
 #include "data_structure.h"
 #include "hashfile_to_map.h"
 
@@ -181,87 +181,111 @@ int main() {
         clusters.emplace(clst13.cluster_ID_,clst13);
         clusters.emplace(clst14.cluster_ID_,clst14);
         clusters.emplace(clst15.cluster_ID_,clst15);
-    }
 
+        graphClustering.init(clusters); // calculate k for each node
+        cout <<"Graph clustering initiated"<<endl;
+        graphClustering.clustering_chunk_based(clusters);
+        cout <<"Graph clustering partitioned"<<endl;
+        graphClustering.save_clusters(clusters);
+        cout <<"Graph clustering saved to "<<graphClustering.global_filename_<<endl;
+        
+        // clear clusters to test load_clusters from file global_filename_
+        clusters.clear();
 
-    load_fileref(g_file_filename_);
-    //load_chunkref(g_chunk_filename_);
-    //load_finish();
+            // clear clusters to test load_clusters from file global_filename_
+        clusters.clear();
+        
+        graphClustering.load_clusters(clusters);
+        //graphClustering.clustering_file_based(clusters);
+        D(cout<<"Loaded cluster:"<<endl);
+        if(DEBUG) graphClustering.print_clusters(clusters);
 
-    int cluster_cnt = 0, file_cnt=0, chunk_cnt=0;
-    node *n, *neighbor_n;
+    } else {
+        string file_filename_ = "allfile_64k_full.dat";
+        load_fileref(file_filename_);
+        //load_chunkref(g_chunk_filename_);
+        //load_finish();
 
-    for(pair<string, FileRef*> fp: all_fileref){
-        // for every pair of chunks, create nodes and increase their weight
-        for (std::unordered_map<string, ChunkRef*>::iterator i = fp.second->internal_chunk_map.begin(); i != fp.second->internal_chunk_map.end(); i++){
-            // if chunk i not existed in graph_matrix, create a new node for this chunk
-            unordered_map<string,node&>::iterator nit = graphClustering.graph_matrix.find(i->first);
-            if (nit==graphClustering.graph_matrix.end()) {
-                // first time see the chunk, create a new node for it
-                n = new node(i->first);
-                n->k = 0;
-            } else {
-                // saw this chunk, get its node
-                n = &nit->second;
-            }
-            // pair chunk i with rest of the chunks, chunk j
-            // add them into node->adjacent_nodes
-            for (std::unordered_map<string, ChunkRef*>::iterator j = std::next(i); j != fp.second->internal_chunk_map.end(); j++){
-                // if j is already in n->adjacent_nodes, then its weight++, else insert j into n->adjacent_nodes with weight=1
-                unordered_map<string,int>::iterator neighbor_it = n->adjacent_nodes_.find(j->first);
-                if(neighbor_it == n->adjacent_nodes_.end()) {
-                    // j is not in i's neighbor list, add it!
-                    n->adjacent_nodes_.emplace(j->first, 1);
+        cout<<"Finished loading "<<file_filename_<<"."<<endl;
+        int cluster_cnt = 0, file_cnt=0, chunk_cnt=0;
+        node *n, *neighbor_n;
+        unsigned long total_node_size = 0;
+        for(pair<string, FileRef*> fp: all_fileref){
+            // for every pair of chunks, create nodes and increase their weight
+            chunk_cnt = 0;
+            for (std::unordered_map<string, ChunkRef*>::iterator i = fp.second->internal_chunk_map.begin(); i != fp.second->internal_chunk_map.end(); i++){
+                // if chunk i not existed in graph_matrix, create a new node for this chunk
+                unordered_map<string,node&>::iterator nit = graphClustering.graph_matrix.find(i->first);
+                if (nit==graphClustering.graph_matrix.end()) {
+                    // first time see the chunk, create a new node for it
+                    n = new node(i->first);
+                    total_node_size += sizeof(node);
+                    //n->k = 0;
                 } else {
-                    // found j in i's adjacent_nodes, weight++
-                    neighbor_it->second++;
+                    // saw this chunk, get its node
+                    n = &nit->second;
                 }
-                // add the neighbor's weight for this (n,j) pair
-                // find neighbor node in graph_matrix, if not found, create one
-                // if found, add neighbor node and weight
-                unordered_map<string,node&>::iterator graph_it = graphClustering.graph_matrix.find(j->first);
-                if(graph_it == graphClustering.graph_matrix.end()) {
-                    neighbor_n = new node(j->first);
-                    neighbor_n->k = 0;
-                    neighbor_n->adjacent_nodes_.emplace(i->first,1);
-                    graphClustering.graph_matrix.emplace(neighbor_n->chunk_ID_,*neighbor_n);
-                }else{
-                    // check if the j node in graph_matrix already has i in its adjacent_nodes
-                    unordered_map<string,int>::iterator i_it = graph_it->second.adjacent_nodes_.find(i->first);
-                    if(i_it == graph_it->second.adjacent_nodes_.end()){
-                        graph_it->second.adjacent_nodes_.emplace(i->first,1);
+                // pair chunk i with rest of the chunks, chunk j
+                // add them into node->adjacent_nodes
+                for (std::unordered_map<string, ChunkRef*>::iterator j = std::next(i); j != fp.second->internal_chunk_map.end(); j++){
+                    // if j is already in n->adjacent_nodes, then its weight++, else insert j into n->adjacent_nodes with weight=1
+                    unordered_map<string,int>::iterator neighbor_it = n->adjacent_nodes_.find(j->first);
+                    if(neighbor_it == n->adjacent_nodes_.end()) {
+                        // j is not in i's neighbor list, add it!
+                        n->adjacent_nodes_.emplace(j->first, 1);
+                        total_node_size+=10;
+                    } else {
+                        // found j in i's adjacent_nodes, weight++
+                        neighbor_it->second++;
+                    }
+                    // add the neighbor's weight for this (n==i,j) pair
+                    // find neighbor node in graph_matrix, if not found, create one
+                    // if found, add neighbor node and weight
+                    unordered_map<string,node&>::iterator graph_it = graphClustering.graph_matrix.find(j->first);
+                    if(graph_it == graphClustering.graph_matrix.end()) {
+                        neighbor_n = new node(j->first);
+                        neighbor_n->k = 0;
+                        neighbor_n->adjacent_nodes_.emplace(i->first,1);
+                        graphClustering.graph_matrix.emplace(neighbor_n->chunk_ID_,*neighbor_n);
                     }else{
-                        i_it->second++;
+                        // check if the j node in graph_matrix already has i in its adjacent_nodes
+                        unordered_map<string,int>::iterator i_it = graph_it->second.adjacent_nodes_.find(i->first);
+                        if(i_it == graph_it->second.adjacent_nodes_.end()){
+                            graph_it->second.adjacent_nodes_.emplace(i->first,1);
+                        }else{
+                            i_it->second++;
+                        }
                     }
                 }
+                // make sure the above changes reflect to graph_matrix
+                if (nit==graphClustering.graph_matrix.end()) {
+                    graphClustering.graph_matrix.emplace(n->chunk_ID_,*n);
+                } //else {
+                    //nit->second = *n; // no need to re-assign
+                    //nit->second.k = 1; //set a tag
+                //}
+                chunk_cnt++;
             }
-            // make sure the above changes reflect to graph_matrix
-            if (nit==graphClustering.graph_matrix.end()) {
-                graphClustering.graph_matrix.emplace(n->chunk_ID_,*n);
-            } //else {
-                //nit->second = *n; // no need to re-assign
-                //nit->second.k = 1; //set a tag
-            //}
-            chunk_cnt++;
+            cout<<"Total_node_size: "<<total_node_size<<endl;
+            cout<<"Processed file-"<<file_cnt<<" with "<<chunk_cnt<<" chunks."<<endl;
+            file_cnt++;
+            // Finished with this file, delete the FileRef
+            delete fp.second;
         }
-        file_cnt++;
-        // Finished with this file, delete the FileRef
-        delete fp.second;
-    }
-    cout<<"Processed "<<file_cnt<<" files into graph cluster"<<endl;
+        cout<<"Processed "<<file_cnt<<" files into graph cluster"<<endl;
 
-    // check graph_matrix is modified by scanning k
-    // CONFIRMED the modification to graph_matrix are effective
-    cluster *cl;
+        // check graph_matrix is modified by scanning k
+        // CONFIRMED the modification to graph_matrix are effective
+        cluster *cl;
 
-    for(auto nit : graphClustering.graph_matrix) {
-        cl = new cluster(cluster_cnt);
-        cl->chunks_.emplace(nit.first,nit.second);
-        clusters.emplace(cl->cluster_ID_,*cl);
-        cluster_cnt++;
-    }
-    cout<<"Created "<<cluster_cnt<<" clusters based on "<<file_cnt<<" files and "<<chunk_cnt<<" chunks"<<endl;
-    // }
+        for(auto nit : graphClustering.graph_matrix) {
+            cl = new cluster(cluster_cnt);
+            cl->chunks_.emplace(nit.first,nit.second);
+            clusters.emplace(cl->cluster_ID_,*cl);
+            cluster_cnt++;
+        }
+        cout<<"Created "<<cluster_cnt<<" clusters based on "<<file_cnt<<" files and "<<chunk_cnt<<" chunks"<<endl;
+    
 
     // create clusters from graphClustering.graph_matrix
 
@@ -289,31 +313,32 @@ int main() {
     //     cluster_cnt++;
     // }
     // Get starting timepoint 
-    cout <<"Start clustering."<<endl;
-    auto start = std::chrono::high_resolution_clock::now();
+        cout <<"Start clustering."<<endl;
+        auto start = std::chrono::high_resolution_clock::now();
+        
+        graphClustering.init(clusters); // calculate k for each node
+        cout <<"Graph clustering initiated"<<endl;
+        graphClustering.clustering_chunk_based(clusters);
+        cout <<"Graph clustering partitioned"<<endl;
+        
+        // Get ending timepoint 
+        auto stop = std::chrono::high_resolution_clock::now(); 
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
     
-    graphClustering.init(clusters); // calculate k for each node
-    cout <<"Graph clustering initiated"<<endl;
-    graphClustering.clustering_chunk_based(clusters);
-    cout <<"Graph clustering partitioned"<<endl;
-    
-    // Get ending timepoint 
-    auto stop = std::chrono::high_resolution_clock::now(); 
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start); 
-  
-    cout << "Time taken by clustering: "
-         << duration.count() << " microseconds" << endl;
+        cout << "Time taken by clustering: "
+            << duration.count() << " microseconds" << endl;
 
-    graphClustering.save_clusters(clusters);
-    cout <<"Graph clustering saved to "<<graphClustering.global_filename_<<endl;
-    
-    // clear clusters to test load_clusters from file global_filename_
-    clusters.clear();
-    
-    graphClustering.load_clusters(clusters);
-    //graphClustering.clustering_file_based(clusters);
-    D(cout<<"Loaded cluster:"<<endl);
-    if(DEBUG) graphClustering.print_clusters(clusters);
-    //clusters are ready from this point
+        graphClustering.save_clusters(clusters);
+        cout <<"Graph clustering saved to "<<graphClustering.global_filename_<<endl;
+        
+        // clear clusters to test load_clusters from file global_filename_
+        clusters.clear();
+        
+        graphClustering.load_clusters(clusters);
+        //graphClustering.clustering_file_based(clusters);
+        D(cout<<"Loaded cluster:"<<endl);
+        if(DEBUG) graphClustering.print_clusters(clusters);
+        //clusters are ready from this point
+    }
     return 0;
 }
