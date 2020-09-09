@@ -76,7 +76,7 @@ public:
     void init(unordered_map<int, cluster>&);
     std::tuple<int,int> calculate_modularity(unordered_map<int, cluster>&);
     void merge_clusters(unordered_map<int, cluster>&, std::tuple<int,int>);
-    void clustering_file_based(unordered_map<int, cluster>&);
+    void clustering_file_based(unordered_map<int, cluster>&, int);
     void clustering_chunk_based(unordered_map<int, cluster>&);
     void print_clusters(unordered_map<int, cluster>&);
     void save_clusters(unordered_map<int, cluster>&);
